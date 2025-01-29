@@ -1,1 +1,1 @@
-1
+route ini untuk menyimpan data gambar yang di upload.
