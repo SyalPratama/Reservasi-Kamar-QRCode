@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Pelanggan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <h1 class="text-center mb-4">Detail Pelanggan Kamar {{ table['id'] }}</h1>
+        
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title">Informasi Pelanggan</h4>
+                <ul class="list-group">
+                    <li class="list-group-item"><strong>Nama Pelanggan:</strong> {{ table['pelanggan']['nama'] }}</li>
+                    <li class="list-group-item"><strong>Nomor Telepon:</strong> {{ table['pelanggan']['telepon'] }}</li>
+                    <li class="list-group-item"><strong>Check-In:</strong> {{ table['pelanggan']['check_in'] }}</li>
+                    <li class="list-group-item"><strong>Check-Out:</strong> {{ table['pelanggan']['check_out'] }}</li>
+                    <li class="list-group-item"><strong>Metode Pembayaran:</strong> {{ table['pelanggan']['metode_pembayaran'] }}</li>
+                    <li class="list-group-item">
+                        <strong>Bukti Pembayaran:</strong> 
+                        <a href="/uploads/{{ table['pelanggan']['bukti_pembayaran'] }}" target="_blank">
+                            {{ table['pelanggan']['bukti_pembayaran'] }}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <a href="/" class="btn btn-primary">Kembali ke Daftar Kamar</a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

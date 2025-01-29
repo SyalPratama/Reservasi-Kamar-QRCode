@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Kamar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-header {
+            background: linear-gradient(to right, #4e73df, #1cc88a);
+            color: #fff;
+            border-bottom: 2px solid #d1d3e2;
+        }
+
+        .card img {
+            max-height: 150px;
+            object-fit: contain;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container my-5">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3><b>Selamat Datang di Hotel California</b></h3>
+                <h4 class="mb-0">Silakan cari kamar yang kosong!</h4>
+            </div>
+            <div class="card-body">
+                <div class="row" id="table-container">
+                    {% for item in table_data %}
+                    <div class="col-md-3 mb-4" id="table-{{ item.table.id }}">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Kamar {{ item.table.id }}</h5>
+                                <p class="card-text">
+                                    Status:
+                                    <b>
+                                        <span class="{{ 'text-success' if item.table.status == 'kosong' else 'text-danger' }}"
+                                            id="status-{{ item.table.id }}">
+                                            {{ item.table.status }}
+                                        </span>
+                                    </b>
+                                </p>
+                                <div id="button-container-{{ item.table.id }}">
+                                    {% if item.table.status == 'terisi' %}
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#detailModal" onclick="loadTableDetails({{ item.table.id }})">
+                                        Lihat Data
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <img src="data:image/png;base64,{{ item.qr }}" alt="QR Code" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-title">Detail Kamar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <!-- Data akan diisi oleh JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Memperbarui status meja/kamar
+        function updateTableStatus() {
+            fetch('/get_status')
+                .then(response => response.json())
+                .then(data => {
+                    data.tables.forEach(table => {
+                        const statusElement = document.getElementById(`status-${table.id}`);
+                        const buttonContainer = document.getElementById(`button-container-${table.id}`);
+
+                        if (statusElement) {
+                            statusElement.textContent = table.status;
+                            statusElement.className = table.status === 'kosong' ? 'text-success' : 'text-danger';
+
+                            if (table.status === 'terisi') {
+                                buttonContainer.innerHTML = `
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" 
+                                            data-bs-target="#detailModal" 
+                                            onclick="loadTableDetails(${table.id})">
+                                        Lihat Data
+                                    </button>
+                                `;
+                            } else {
+                                buttonContainer.innerHTML = '';
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching table status:', error));
+        }
+
+        // Memuat detail kamar ke modal
+        function loadTableDetails(tableId) {
+            fetch(`/get_table_details/${tableId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const pelanggan = data.table.pelanggan || {};
+                        document.getElementById('modal-title').textContent = `Detail Kamar ${tableId}`;
+                        document.getElementById('modal-body').innerHTML = `
+                            <p><strong>Nama:</strong> ${pelanggan.nama || 'N/A'}</p>
+                            <p><strong>Telepon:</strong> ${pelanggan.telepon || 'N/A'}</p>
+                            <p><strong>Check-In:</strong> ${pelanggan.check_in || 'N/A'}</p>
+                            <p><strong>Check-Out:</strong> ${pelanggan.check_out || 'N/A'}</p>
+                            <p><strong>Metode Pembayaran:</strong> ${pelanggan.metode_pembayaran || 'N/A'}</p>
+                            <p><strong>Bukti Pembayaran:</strong> 
+                                ${pelanggan.bukti_pembayaran ? 
+                                    `<a href="/uploads/${pelanggan.bukti_pembayaran}" target="_blank">Lihat File</a>` 
+                                    : 'N/A'}
+                            </p>
+                        `;
+                    } else {
+                        document.getElementById('modal-body').innerHTML = '<p>Data tidak ditemukan.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching table details:', error);
+                    document.getElementById('modal-body').innerHTML = '<p>Error saat memuat data.</p>';
+                });
+        }
+
+        // Memperbarui status setiap 5 detik
+        setInterval(updateTableStatus, 5000);
+    </script>
+</body>
+
+</html>
