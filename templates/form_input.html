@@ -29,11 +29,20 @@
                     <li class="list-group-item"><strong>Check-in:</strong> {{ pelanggan.check_in }}</li>
                     <li class="list-group-item"><strong>Check-out:</strong> {{ pelanggan.check_out }}</li>
                     <li class="list-group-item"><strong>Metode Pembayaran:</strong> {{ pelanggan.metode_pembayaran }}</li>
+                    <li class="list-group-item"><strong>Bukti Pembayaran:</strong>  
+                      {% if pelanggan.bukti_pembayaran %}
+                          <br>
+                          <img src="{{ url_for('uploaded_file', filename=pelanggan.bukti_pembayaran) }}" alt="Bukti Pembayaran" style="max-width: 30%; height: auto;">
+                      {% else %}
+                          N/A
+                      {% endif %}
+                  </li>
                   </ul>
                       
                     <div class="mt-4 text-center">
-                      <button type="submit" class="btn btn-primary" name="reset_kamar" value="true">Kosongkan Kamar</button>
-                      <a href="/" class="btn btn-secondary">Kembali ke Daftar Kamar</a>
+                      <button type="submit" class="btn btn-sm btn-primary" name="reset_kamar" value="true">Kosongkan Kamar</button>
+                      <a href="/cancel_menginap/{{ table['id'] }}" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin membatalkan pesanan?')">Cancel Order</a>
+                      <a href="/admin" class="btn btn-sm btn-secondary">Kembali</a>
                     </div>
                   {% else %}
                     <div class="mb-3">
