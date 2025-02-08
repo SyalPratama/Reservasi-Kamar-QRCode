@@ -23,12 +23,12 @@
 
 <body>
     <div class="container my-5">
-        <div class="card">
-            <div class="card-header text-center">
-                <h3><b>Selamat Datang di Hotel California</b></h3>
-                <h4 class="mb-0">Silakan cari kamar yang kosong!</h4>
-            </div>
+        <div class="card shadow">
             <div class="card-body">
+                <div class="card-header text-center mb-4">
+                    <h3><b>Selamat Datang di HomeStay Tok Dalang</b></h3>
+                    <h4 class="mb-0">Silakan cari kamar yang kosong!</h4>
+                </div>
                 <div class="row" id="table-container">
                     {% for item in table_data %}
                     <div class="col-md-3 mb-4" id="table-{{ item.table.id }}">
@@ -128,7 +128,7 @@
                             <p><strong>Metode Pembayaran:</strong> ${pelanggan.metode_pembayaran || 'N/A'}</p>
                             <p><strong>Bukti Pembayaran:</strong> 
                                 ${pelanggan.bukti_pembayaran ? 
-                                    `<a href="/uploads/${pelanggan.bukti_pembayaran}" target="_blank">Lihat File</a>` 
+                                    `<img src="/uploads/${pelanggan.bukti_pembayaran}" alt="Bukti Pembayaran" style="max-width: 100%; height: auto;">`  
                                     : 'N/A'}
                             </p>
                         `;
