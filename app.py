@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import qrcode
 from io import BytesIO
 import base64
@@ -21,7 +21,7 @@ def allowed_file(filename):
 
 # Data awal status kamar
 tables = [
-    {"id": i, "status": "kosong"} for i in range(1, 9)
+    {"id": i, "status": "kosong", "count": 0} for i in range(201, 209)
 ]
 
 @app.route('/')
@@ -32,7 +32,7 @@ def index():
     table_data = []
     for table in tables:
         qr = qrcode.QRCode()
-        qr_data = f"http://192.168.168.19:5000/update_status/{table['id']}"
+        qr_data = f"http://192.168.0.11:5000/update_status/{table['id']}"
         qr.add_data(qr_data)
         qr.make(fit=True)
         img = BytesIO()
@@ -65,13 +65,24 @@ def update_status(table_id):
     is_admin = request.args.get('is_admin', 'false').lower() == 'true'
 
     if table['status'] == 'terisi' and not is_admin:
-        return jsonify({"success": False, "message": "Anda hanya dapat menscan kamar yang kosong"}), 403
+        return f"""
+            <script>
+                alert("Anda hanya bisa mengscan kamar yang kosong!");
+                window.location.href = "../";
+            </script>
+            """
 
     if request.method == 'POST':
         if is_admin and request.form.get('reset_kamar'):
             table['status'] = 'kosong'
             table.pop('pelanggan', None)
-            return jsonify({"success": True, "message": f"Kamar {table_id} berhasil dikosongkan"}), 200
+
+            return f"""
+            <script>
+                alert("Kamar {table_id} berhasil dikosongkan!");
+                window.location.href = "/update_status/{table_id}?is_admin=true";
+            </script>
+            """
 
         nama_pelanggan = request.form.get('nama_pelanggan')
         nomor_telepon = request.form.get('nomor_telepon')
@@ -100,10 +111,37 @@ def update_status(table_id):
             "bukti_pembayaran": filename
         }
 
+        if request.method == 'POST':
+            table['status'] = 'terisi'
+            table['count'] += 1  # Menambah jumlah penggunaan kamar
+
         return render_template('detail_pelanggan.html', table=table)
 
     pelanggan = table.get('pelanggan', {})
     return render_template('form_input.html', table=table, pelanggan=pelanggan, is_admin=is_admin)
+
+@app.route('/cancel_menginap/<int:table_id>', methods=['GET'])
+def cancel_menginap(table_id):
+    """
+    Endpoint untuk membatalkan menginap dan mengosongkan kamar.
+    """
+    table = next((t for t in tables if t['id'] == table_id), None)
+    if not table:
+        return jsonify({"success": False, "message": "Kamar tidak ditemukan"}), 404
+
+    if table['status'] == 'kosong':
+        return jsonify({"success": False, "message": "Kamar sudah kosong"}), 400
+
+    table['status'] = 'kosong'
+    table.pop('pelanggan', None)
+    table['count'] = 0
+
+    return f"""
+            <script>
+                alert("Kamar {table_id}, Order Berhasil Dibatalkan");
+                window.location.href = "/update_status/{table_id}?is_admin=true";
+            </script>
+            """
 
 @app.route('/get_table_details/<int:table_id>', methods=['GET'])
 def get_table_details(table_id):
@@ -116,5 +154,30 @@ def get_table_details(table_id):
 
     return jsonify({"success": True, "table": table})
 
+@app.route('/admin')
+def admin():
+    return render_template('admin.html', tables=tables)
+
+@app.route('/room_usage_data', methods=['GET'])
+def room_usage_data():
+    """Mengirim data penggunaan kamar dalam format JSON"""
+    data = [{"id": table["id"], "count": table["count"]} for table in tables]
+    return jsonify(data)
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    """Mengirim file gambar atau dokumen dari folder uploads."""
+    try:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    except FileNotFoundError:
+        abort(404)
+
+@app.route('/uploads/')
+def list_uploaded_files():
+    """Menampilkan daftar file dalam folder uploads."""
+    files = os.listdir(app.config['UPLOAD_FOLDER'])
+    file_urls = [f'<a href="/uploads/{file}">{file}</a>' for file in files]
+    return "<h2>Daftar File Upload</h2>" + "<br>".join(file_urls)
+
 if __name__ == '__main__':
-    app.run(host='192.168.168.19', port=5000, debug=True)
+    app.run(host='192.168.0.11', port=5000, debug=True)
